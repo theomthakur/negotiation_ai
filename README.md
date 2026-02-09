@@ -4,14 +4,6 @@
 
 DealForge is a multi-device, real-time negotiation system where every seller is represented by an autonomous AI agent and every buyer has a personal negotiating agent. Set your constraints once, and your agent negotiates across up to 10 sellers simultaneously, factoring in your credit card rewards, and returning the optimal deal with clear tradeoffs and full transparency.
 
-## Team
-
-| Name | Email |
-|------|-------|
-| [Your Name] | [your@email.com] |
-| [Team Member 2] | [email2@email.com] |
-| [Team Member 3] | [email3@email.com] |
-
 ## Overview
 
 ### The Problem
