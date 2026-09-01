@@ -28,3 +28,7 @@ reportlab>=4.0.0
 # RAG: embeddings and vector store
 sentence-transformers>=2.2.0
 numpy>=1.24.0
+
+# Agent orchestration
+langgraph>=0.2.0
+langchain-core>=0.3.0
