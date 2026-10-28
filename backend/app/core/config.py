@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     MAX_NEGOTIATION_ROUNDS: int = 10
     MIN_NEGOTIATION_ROUNDS: int = 2  # Minimum rounds before buyer can decide
     PARALLEL_SELLER_LIMIT: int = 10  # Max concurrent seller responses (up to 10 for demo)
+    ORCHESTRATOR: Literal["asyncio", "langgraph"] = "langgraph"
     
     # CORS - accepts comma-separated string or list
     # Use str type and parse in validator to avoid JSON parsing issues

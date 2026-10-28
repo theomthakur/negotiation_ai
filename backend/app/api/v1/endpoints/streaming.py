@@ -27,6 +27,16 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+def make_negotiation_runner(provider, mode: str):
+    """LangGraph by default (parity-tested against the original); ORCHESTRATOR=asyncio keeps the original loop."""
+    orchestrator = NegotiationGraph(provider)
+    if mode == "asyncio":
+        return orchestrator
+    from ....agents.negotiation_state_graph import LangGraphNegotiation
+
+    return LangGraphNegotiation(orchestrator)
+
+
 async def negotiation_event_generator(room_id: str) -> AsyncIterator[dict]:
     """
     Generate SSE events for negotiation.
@@ -74,8 +84,7 @@ async def negotiation_event_generator(room_id: str) -> AsyncIterator[dict]:
         # Get LLM provider from room state (session-specific)
         provider = get_provider(room_state.llm_provider)
         
-        # Create negotiation graph
-        graph = NegotiationGraph(provider)
+        graph = make_negotiation_runner(provider, settings.ORCHESTRATOR)
         
         # Create heartbeat task
         heartbeat_task = None

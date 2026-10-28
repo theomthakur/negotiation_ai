@@ -30,7 +30,7 @@ The companion **Galaxy S25 phone** acts as a lightweight capture and action surf
 │                                                            │
 │  ┌──────────────────┐  ┌──────────────────────────┐       │
 │  │  LM Studio       │  │  FastAPI Backend          │       │
-│  │  Qwen3-1.7B      │──│  LangGraph Orchestration  │       │
+│  │  Qwen3-1.7B      │──│  Asyncio / LangGraph      │       │
 │  │  NPU/GPU/CPU     │  │  SSE Streaming            │       │
 │  │  Acceleration     │  │  Credit Card Engine       │       │
 │  └──────────────────┘  │  Deal Explainer            │       │
@@ -63,7 +63,7 @@ The companion **Galaxy S25 phone** acts as a lightweight capture and action surf
 
 ### Backend
 - **Framework**: FastAPI 0.104+
-- **Orchestration**: LangGraph-style async state machine
+- **Orchestration**: a LangGraph StateGraph runs the live negotiation by default. The original asyncio state machine remains available (`ORCHESTRATOR=asyncio`), and parity tests show both emit identical events.
 - **Database**: SQLite 3 with WAL mode (SQLAlchemy ORM)
 - **LLM Provider**: LM Studio (Qwen3-1.7B on-device) + OpenRouter cloud fallback
 - **Streaming**: Server-Sent Events (SSE) with heartbeat
@@ -134,9 +134,31 @@ pip install -r requirements.txt
 # Configure environment
 cp env.template .env
 # Edit .env: set LLM_PROVIDER=lm_studio (default)
+# ORCHESTRATOR=langgraph (default) or asyncio (the original loop)
 
 # Start server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Negotiation orchestration
+
+`ORCHESTRATOR=langgraph` (the default) runs the compiled graph through the
+`/api/v1/negotiation/{room_id}/stream` endpoint. Set `ORCHESTRATOR=asyncio` in
+`backend/.env` to run the original asyncio loop instead. The graph has buyer,
+routing, parallel seller, and decision nodes, plus an explicit round limit. It
+reuses the existing agent methods and emits the same event names and payloads
+as the asyncio path. The backend must be restarted after changing the setting.
+
+The graph uses a per-run in-memory checkpointer. Its state can be inspected
+while the process lives, but it does **not** provide recovery after a server
+restart or a disconnected SSE request. Durable resume needs a persistent
+checkpointer and reconnect handling; neither is claimed here.
+
+Run the parity checks without an LLM or external API:
+
+```bash
+cd backend
+python -m pytest tests/test_negotiation_state_graph.py -q
 ```
 
 ### Frontend Setup
@@ -196,7 +218,8 @@ DealForge/
 │   │   ├── agents/              # Buyer & Seller AI agents
 │   │   │   ├── buyer_agent.py
 │   │   │   ├── seller_agent.py
-│   │   │   ├── graph_builder.py  # LangGraph negotiation orchestrator
+│   │   │   ├── graph_builder.py  # Original asyncio orchestrator
+│   │   │   ├── negotiation_state_graph.py  # Live LangGraph path (default)
 │   │   │   └── prompts.py        # Agent prompt templates (10 strategies)
 │   │   ├── api/v1/endpoints/
 │   │   │   ├── mobile.py          # Phone companion API
@@ -245,7 +268,7 @@ DealForge/
 - [Qwen3 Models](https://huggingface.co/Qwen) - On-device model
 - [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
 - [Next.js 14](https://nextjs.org/) - Frontend framework
-- [LangGraph](https://github.com/langchain-ai/langgraph) - Agent orchestration concepts
+- [LangGraph](https://github.com/langchain-ai/langgraph) - Negotiation StateGraph (default orchestrator)
 - [Qualcomm AI Stack](https://www.qualcomm.com/developer/artificial-intelligence) - Snapdragon AI tools
 
 ## License
